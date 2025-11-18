@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English in Yekaterinburg's Linguistic Landscape</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .map-container {
+            flex: 1;
+            min-width: 300px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            height: 600px;
+        }
+        
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .attractions-sidebar {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .attraction-item {
+            display: flex;
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .attraction-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .attraction-item:last-child {
+            margin-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .attraction-img {
+            width: 100px;
+            height: 100px;
+            border-radius: 10px;
+            object-fit: cover;
+            margin-right: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .attraction-info h3 {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+            color: #1a2a6c;
+        }
+        
+        .attraction-info p {
+            color: #666;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+        
+        .attraction-detail {
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .detail-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .detail-img {
+            width: 200px;
+            height: 150px;
+            border-radius: 10px;
+            object-fit: cover;
+            margin-right: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .detail-info h2 {
+            font-size: 1.8rem;
+            color: #1a2a6c;
+            margin-bottom: 10px;
+        }
+        
+        .detail-description {
+            line-height: 1.6;
+            color: #444;
+        }
+        
+        .back-button {
+            background: #1a2a6c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+        
+        .back-button:hover {
+            background: #0d1a4a;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .leaflet-popup-content {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .leaflet-popup-content h3 {
+            margin: 5px 0;
+            color: #1a2a6c;
+        }
+        
+        .leaflet-popup-content p {
+            margin: 5px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .map-container, .attractions-sidebar {
+                width: 100%;
+            }
+            
+            .detail-header {
+                flex-direction: column;
+            }
+            
+            .detail-img {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>English in Yekaterinburg's Linguistic Landscape</h1>
+            <p class="subtitle">Explore how English shapes the urban space of the Ural capital through this interactive map.</p>
+        </header>
+        
+        <div class="content">
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+            
+            <div class="attractions-sidebar" id="attractions-list">
+                <!-- Список достопримечательностей будет сгенерирован JavaScript -->
+            </div>
+        </div>
+        
+        <div class="attraction-detail" id="attraction-detail">
+            <!-- Детальная информация будет сгенерирована JavaScript -->
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Данные о достопримечательностях
+        const attractions = [
+            {
+                id: 1,
+                name: "Warning in the subway",
+                description: "Information sign",
+                lat: 56.836310,
+                lng: 60.599773,
+                image: "!!в метро.jpg"
+            },
+            {
+                id: 2,
+                name: "Street sign on the building",
+                description: "Navigation sign",
+                lat: 56.836396,
+                lng: 60.594088,
+                image: "!!вайнера 10.jpg"
+            },
+            {
+                id: 3,
+                name: "Street sign",
+                description: "Navigation sign",
+                lat: 56.837150,
+                lng: 60.595502,
+                image: "!!около администрации екб.jpg"
+            },
+            {
+                id: 4,
+                name: "Street sign on the building",
+                description: "Navigation sign",
+                lat: 56.840705,
+                lng: 60.598373,
+                image: "8 марта 1.jpg"
+            },
+            {
+                id: 5,
+                name: "Street sign",
+                description: "Navigation sign",
+                lat: 56.829547,
+                lng: 60.604383,
+                image: "8 марта 37а рядом с парком.jpg"
+            },
+            {
+                id: 6,
+                name: "Instruction",
+                description: "Information sign",
+                lat: 56.829106,
+                lng: 60.599493,
+                image: "в гринвич синема табличка.jpg"
+            },
+            {
+                id: 9,
+                name: "Art object",
+                description: "Cultural sign",
+                lat: 56.834018,
+                lng: 60.606943,
+                image: "!!горького 8.jpg"
+            },
+{
+                id: 10,
+                name: "Description of monument",
+                description: "Memorial sign",
+                lat: 56.835057,
+                lng: 60.610618,
+                image: "американская гостиница.jpg"
+            },
+{
+                id: 11,
+                name: "Description of monument",
+                description: "Memorial sign",
+                lat: 56.839197,
+                lng: 60.607013,
+                image: "аптека горного ведомства.jpg"
+            },
+{
+                id: 12,
+                name: "Description of monument",
+                description: "Memorial sign",
+                lat: 56.835602,
+                lng: 60.591848,
+                image: "дом белоусова.jpg"
+            },
+{
+                id: 13,
+                name: "Description of monument",
+                description: "Memorial sign",
+                lat: 56.831663,
+                lng: 60.603807,
+                image: "дом петелиной.jpg"
+            },
+{
+                id: 14,
+                name: "Description of monument",
+                description: "Memorial sign",
+                lat: 56.834115,
+                lng: 60.602739,
+                image: "дом поклевских-козелл музей.jpg"
+            },
+{
+                id: 15,
+                name: "Description of monument",
+                description: "Memorial sign",
+                lat: 56.836165,
+                lng: 60.591671,
+                image: "здание бывшей гостиницы казань.jpg"
+            },
+{
+                id: 16,
+                name: "Description of monument",
+                description: "Memorial sign",
+                lat: 56.835096,
+                lng: 60.613195,
+                image: "здание гостиницы центральная.jpg"
+            },
+{
+                id: 17,
+                name: "Description of monument",
+                description: "Memorial sign",
+                lat: 56.834575,
+                lng: 60.606649,
+                image: "здание гостиницы эрмитаж.jpg"
+            },
+{
+                id: 18,
+                name: "Description of monument",
+                description: "Memorial sign",
+                lat: 56.834643,
+                lng: 60.604975,
+                image: "каменный мост.jpg"
+            },
+{
+                id: 19,
+                name: "Description of monument",
+                description: "Memorial sign",
+                lat: 56.830797,
+                lng: 60.615618,
+                image: "особняк семеновой.jpg"
+            },
+            {
+                id: 20,
+                name: "Warning",
+                description: "Information sign",
+                lat: 56.829683,
+                lng: 60.598521,
+                image: "в гринвиче в метро.jpg"
+            },
+{
+                id: 21,
+                name: "Payment method",
+                description: "Information sign",
+                lat: 56.828828,
+                lng: 60.600869,
+                image: "в гринвиче нажпись с инфой — копия.jpg"
+            },
+{
+                id: 22,
+                name: "Instruction",
+                description: "Information sign",
+                lat: 56.844913,
+                lng: 60.591528,
+                image: "в ельцин центре в кнмжном.jpg"
+            },
+
+{
+                id: 23,
+                name: "Instruction",
+                description: "Information sign",
+                lat: 56.844483,
+                lng: 60.591451,
+                image: "в ельцин центре инфа 2 — копия.jpg"
+            },
+{
+                id:24 ,
+                name: "Building navigation system",
+                description: "Navigation sign",
+                lat: 56.844710,
+                lng: 60.591176,
+                image: "в ельцин центре инфа 3 — копия.jpg"
+            },
+{
+                id: 25,
+                name: "Building navigation system",
+                description: "Navigation sign",
+                lat: 56.844557,
+                lng: 60.591324,
+                image: "в ельцин центре инфа 4 jpg.jpg"
+            },
+{
+                id: 26,
+                name: "Warning",
+                description: "Information sign",
+                lat: 56.807787,
+                lng: 60.611219,
+                image: "в метро 2.jpg"
+            },
+{
+                id: 27,
+                name: "Building navigation system",
+                description: "Navigation sign",
+                lat: 56.836310,
+                lng: 60.599773,
+                image: "в метро 3.jpg"
+            },
+{
+                id: 28,
+                name: "Warning",
+                description: "Information sign",
+                lat: 56.828985,
+                lng: 60.601023,
+                image: "в метрооо.jpg"
+            },
+{
+                id: 29,
+                name: "Building navigation system",
+                description: "Navigation sign",
+                lat: 56.836516,
+                lng: 60.595471,
+                image: "вход с пассаж синема.jpg"
+            },
+{
+                id: 30,
+                name: "Street sign",
+                description: "Navigation sign",
+                lat: 56.832785,
+                lng: 60.610002,
+                image: "гоголя 20 дробь 5.jpg"
+            },
+{
+                id: 31,
+                name: "Street sign on the building",
+                description: "Navigation sign",
+                lat: 56.841246,
+                lng: 60.605326,
+                image: "горького 17.jpg"
+            },
+{
+                id: 32,
+                name: "Street sign on the building",
+                description: "Navigation sign",
+                lat: 56.833531,
+                lng: 60.603170,
+                image: "добролюбова 2.jpg"
+            },
+{
+                id: 33,
+                name: "Street sign",
+                description: "Navigation sign",
+                lat: 56.830808,
+                lng: 60.601490,
+                image: "добролюбова 16 рядом.jpg"
+            },
+{
+                id: 34,
+                name: "Street sign",
+                description: "Navigation sign",
+                lat: 56.832476,
+                lng: 60.573601,
+                image: "екь арена.jpg"
+            },
+{
+                id: 35,
+                name: "Street sign on the building",
+                description: "Navigation sign",
+                lat: 56.832506,
+                lng: 60.538859,
+                image: "крауля 80.2.jpg"
+            },
+{
+                id: 36,
+                name: "Street sign on the building",
+                description: "Navigation sign",
+                lat: 56.837238,
+                lng: 60.597888,
+                image: "ленина 24а.jpg"
+            },
+{
+                id: 37,
+                name: "Street sign on the building",
+                description: "Navigation sign",
+                lat: 56.838804,
+                lng: 60.621379,
+                image: "луначарского 133.jpg"
+            },
+{
+                id: 38,
+                name: "Street sign on the building",
+                description: "Navigation sign",
+                lat: 56.835353,
+                lng: 60.623014,
+                image: "луначарского 167.jpg"
+            },
+{
+                id: 39,
+                name: "Street sign on the building",
+                description: "Navigation sign",
+                lat: 56.834639,
+                lng: 60.623256,
+                image: "луначарского 171.jpg"
+            },
+{
+                id: 40,
+                name: "Street sign on the building",
+                description: "Navigation sign",
+                lat: 56.834560,
+                lng: 60.606503,
+                image: "малышева 56.jpg"
+            },
+{
+                id: 41,
+                name: "Street sign",
+                description: "Navigation sign",
+                lat: 56.829875,
+                lng: 60.613977,
+                image: "малышева 68 рядом с дорогой.jpg"
+            },
+{
+                id: 42,
+                name: "Street sign on the building",
+                description: "Navigation sign",
+                lat: 56.835884,
+                lng: 60.620031,
+                image: "малышева 90.jpg"
+            },
+{
+                id: 43,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.840119,
+                lng: 60.655586,
+                image: "малышева 136 где на фитнес идем.jpg"
+            },
+{
+                id: 44,
+                name: "Subway map",
+                description: "Navigation sign",
+                lat: 56.808340,
+                lng: 60.609322,
+                image: "метро чкаловская.jpg"
+            },
+{
+                id: 45,
+                name: "Building navigation system",
+                description: "Navigation sign",
+                lat: 56.830341,
+                lng: 60.599995,
+                image: "метроо.jpg"
+            },
+{
+                id: 46,
+                name: "Street sign",
+                description: "Navigation sign",
+                lat: 56.825423,
+                lng: 60.607047,
+                image: "народной воли 49.jpg"
+            },
+{
+                id: 47,
+                name: "Street sign",
+                description: "Navigation sign",
+                lat: 56.839914,
+                lng: 60.611502,
+                image: "около театра колизей.jpg"
+            },
+{
+                id: 48,
+                name: "Bus stop",
+                description: "Transport Facilitie",
+                lat: 56.836280,
+                lng: 60.620527,
+                image: "остановка дом кино.jpg"
+            },
+{
+                id: 49,
+                name: "Opening hours",
+                description: "Information sign",
+                lat: 56.835141,
+                lng: 60.613157,
+                image: "отель центральный режим работы.jpg"
+            },
+{
+                id: 50,
+                name: "Street sign",
+                description: "Navigation sign",
+                lat: 56.838118,
+                lng: 60.603512,
+                image: "плотинка.jpg"
+            },
+{
+                id: 51,
+                name: "Street sign",
+                description: "Navigation sign",
+                lat: 56.838415,
+                lng: 60.605864,
+                image: "площадь труда рядом с плотинкой.jpg"
+            },
+{
+                id: 52,
+                name: "Street sign on the building",
+                description: "Navigation sign",
+                lat: 56.834382,
+                lng: 60.586919,
+                image: "попова 15 др 41.jpg"
+            },
+{
+                id: 53,
+                name: "Street sign on the building",
+                description: "Navigation sign",
+                lat: 56.834900,
+                lng: 60.588267,
+                image: "попова 16.jpg"
+            },
+{
+                id: 54,
+                name: "Street sign",
+                description: "Navigation sign",
+                lat: 56.833359,
+                lng: 60.612792,
+                image: "розы люксембург 1 рядом.jpg"
+            },
+{
+                id: 55,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.830364,
+                lng: 60.613258,
+                image: "розы люксембург 40 компания цветов.jpg"
+            },
+{
+                id: 56,
+                name: "Street sign",
+                description: "Navigation sign",
+                lat: 56.838359,
+                lng: 60.605341,
+                image: "тоже рядом с плотинкой.jpg"
+            },
+{
+                id: 57,
+                name: "Street sign",
+                description: "Navigation sign",
+                lat: 56.837793,
+                lng: 60.604086,
+                image: "у главпочтомата.jpg"
+            },
+{
+                id: 58,
+                name: "Instruction",
+                description: "Information sign",
+                lat: 56.830918,
+                lng: 60.600778,
+                image: "указат знак 8 марта 37.jpg"
+            },
+{
+                id: 59,
+                name: "Street sign",
+                description: "Navigation sign",
+                lat: 56.826819,
+                lng: 60.610049,
+                image: "указатель на улице около куйбышева 61.jpg"
+            },
+{
+                id: 60,
+                name: "Street sign",
+                description: "Navigation sign",
+                lat: 56.836152,
+                lng: 60.627963,
+                image: "указатель энгельса 36.jpg"
+            },
+{
+                id: 61,
+                name: "Street sign on the building",
+                description: "Navigation sign",
+                lat: 56.827921,
+                lng: 60.612360,
+                image: "улицв куйбышева 42б.jpg"
+            },
+{
+                id: 62,
+                name: "Instruction",
+                description: "Information sign",
+                lat: 56.836332,
+                lng: 60.594678,
+                image: "успенский тц.jpg"
+            },
+{
+                id: 63,
+                name: "Branding label",
+                description: "Informal message",
+                lat: 56.798728,
+                lng: 60.595673,
+                image: "!!в кфс хз гле.jpg"
+            },
+{
+                id: 64,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.831709,
+                lng: 60.624541,
+                image: "!!карла маркса 40.jpg"
+            },
+{
+                id: 65,
+                name: "Motivational inscription",
+                description: "Informal message",
+                lat: 56.830906,
+                lng: 60.599873,
+                image: "!!надпись под магазином радищева 4.jpg"
+            },
+{
+                id: 66,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.838378,
+                lng: 60.604394,
+                image: "!!переход на плотинке.webp"
+            },
+{
+                id: 67,
+                name: "Sticker",
+                description: "Informal message",
+                lat: 56.837544,
+                lng: 60.598644,
+                image: "!!рядом с плотинкой на мосту.jpg"
+            },
+{
+                id: 68,
+                name: "Branding label",
+                description: "Informal message",
+                lat: 56.836942,
+                lng: 60.623583,
+                image: "!!тц большой 2.jpg"
+            },
+{
+                id: 69,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.802376,
+                lng: 60.611250,
+                image: "8 марта 194 2.jpg"
+            },
+{
+                id: 70,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.802268,
+                lng: 60.609943,
+                image: "8 марта 194 3.jpg"
+            },
+{
+                id: 71,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.802262,
+                lng: 60.611350,
+                image: "8 марта 194 4.jpg"
+            },
+{
+                id: 72,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.802186,
+                lng: 60.611378,
+                image: "8 марта 194.jpg"
+            },
+{
+                id: 73,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.840040,
+                lng: 60.638384,
+                image: "генеральская 6б.jpg"
+            },
+{
+                id: 74,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.833058,
+                lng: 60.596414,
+                image: "графити около вайнера 11.jpg"
+            },
+{
+                id: 75,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.848310,
+                lng: 60.590299,
+                image: "графити олимпийская набережная 9.jpg"
+            },
+{
+                id: 76,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.830384,
+                lng: 60.600385,
+                image: "граффити около радищева 1 (2).jpg"
+            },
+{
+                id: 77,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.830346,
+                lng: 60.600272,
+                image: "граффити около радищева 1 (3).jpg"
+            },
+{
+                id: 78,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.830318,
+                lng: 60.600280,
+                image: "граффити около радищева 1.jpg"
+            },
+{
+                id: 79,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.846336,
+                lng: 60.589853,
+                image: "граффити ул бориса ельцина 1а.jpg"
+            },
+{
+                id: 80,
+                name: "Branding label",
+                description: "Informal message",
+                lat: 56.839966,
+                lng: 60.621963,
+                image: "ленина 50 (3).jpg"
+            },
+{
+                id: 81,
+                name: "Branding label",
+                description: "Informal message",
+                lat: 56.839481,
+                lng: 60.621666,
+                image: "ленина 50.jpg"
+            },
+{
+                id: 82,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.829034,
+                lng: 60.539228,
+                image: "металлургов 40.jpg"
+            },
+{
+                id: 83,
+                name: "Sticker",
+                description: "Informal message",
+                lat: 56.838135,
+                lng: 60.603293,
+                image: "на плотинке.jpg"
+            },
+{
+                id: 84,
+                name: "Sticker",
+                description: "Informal message",
+                lat: 56.821106,
+                lng: 60.606442,
+                image: "около 8 марта 57 стикер.jpg"
+            },
+{
+                id: 85,
+                name: "Street sign",
+                description: "Navigation sign",
+                lat: 56.836106,
+                lng: 60.621258,
+                image: "около бетбумки.jpg"
+            },
+{
+                id: 86,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.834457,
+                lng: 60.573176,
+                image: "около екб арены.jpg"
+            },
+{
+                id: 87,
+                name: "Sticker",
+                description: "Informal message",
+                lat: 56.818037,
+                lng: 60.594908,
+                image: "около зеленой рощи.jpg"
+            },
+{
+                id: 88,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.841803,
+                lng: 60.605829,
+                image: "первомайская 1.jpg"
+            },
+{
+                id: 89,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.838270,
+                lng: 60.604436,
+                image: "переход на плотинке.webp"
+            },
+{
+                id: 90,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.838529,
+                lng: 60.604339,
+                image: "переход на плотинке(1).webp"
+            },
+{
+                id: 91,
+                nname: "Graffiti",
+                description: "Informal message",
+                lat: 56.835952,
+                lng: 60.604063,
+                image: "плотинка 2.jpg"
+            },
+{
+                id: 92,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.848437,
+                lng: 60.590470,
+                image: "рисунок олимпийская набережная 9.jpg"
+            },
+{
+                id: 93,
+                name: "Sticker",
+                description: "Informal message",
+                lat: 56.830877,
+                lng: 60.615721,
+                image: "стикер на улице карла маркса 22а.jpg"
+            },
+{
+                id: 94,
+                name: "Sticker",
+                description: "Informal message",
+                lat: 56.837916,
+                lng: 60.604058,
+                image: "тоже на платинке.jpg"
+            },
+{
+                id: 95,
+                name: "Branding label",
+                description: "Informal message",
+                lat: 56.837046,
+                lng: 60.623547,
+                image: "тц большой 3.jpg"
+            },
+{
+                id: 96,
+                name: "Branding label",
+                description: "Informal message",
+                lat: 56.836956,
+                lng: 60.622715,
+                image: "тц большой.jpg"
+            },
+{
+                id: 97,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.832282,
+                lng: 60.575314,
+                image: "у екб ареныы.jpg"
+            },
+{
+                id: 98,
+                name: "Graffiti",
+                description: "Informal message",
+                lat: 56.834117,
+                lng: 60.610060,
+                image: "ул. Гоголя, 9.jpg"
+            },
+{
+                id: 99,
+                name: "Art object",
+                description: "Cultural sign",
+                lat: 56.828590,
+                lng: 60.600044,
+                image: "в гринвиче4444.jpg"
+            },
+{
+                id: 100,
+                name: "Street sign",
+                description: "Navigation sign",
+                lat: 56.837673,
+                lng: 60.595666,
+                image: "на остановке 1905 года 1.jpg"
+            },
+{
+                id: 101,
+                name: "Art object",
+                description: "Cultural sign",
+                lat: 56.823700,
+                lng: 60.504151,
+                image: "!!автобус английский, мега.jpg"
+            },
+{
+                id: 102,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.837101,
+                lng: 60.623010,
+                image: "!!большой симп кофе.jpg"
+            },
+{
+                id: 103,
+                name: "Art object",
+                description: "Cultural sign",
+                lat: 56.828343,
+                lng: 60.600282,
+                image: "!!в гринвиче42542.jpg"
+            },
+            {
+                id: 104,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.827963,
+                lng: 60.607730,
+                image: "!!куйбышева 61 студия красоты.jpg"
+            },
+{
+                id: 105,
+                name: "Commercial facility",
+                description: "Advertising sign",
+                lat: 56.828021,
+                lng: 60.608816,
+                image: "!!куйбышева 61.jpg"
+            },
+{
+                id: 106,
+                name: "Billboard",
+                description: "Advertising sign",
+                lat: 56.836735,
+                lng: 60.622668,
+                image: "!!реклама малышева 71.jpg"
+            },{
+                id: 107,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.786134,
+                lng: 60.523959,
+                image: "анатолия мехренцева 46.jpg"
+            },
+{
+                id: 108,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.823385,
+                lng: 60.605226,
+                image: "бизнес центр 8 мартв 51.jpg"
+            },
+{
+                id: 109,
+                name: "Billboard",
+                description: "Advertising sign",
+                lat: 56.837226,
+                lng: 60.622852,
+                image: "большой243242.jpg"
+            },
+{
+                id: 110,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.828647,
+                lng: 60.600790,
+                image: "в гринвиче кафешка.jpg"
+            },
+{
+                id: 111,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.836849,
+                lng: 60.594357,
+                image: "вайнера 8.jpg"
+            },
+{
+                id: 112,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.836389,
+                lng: 60.594161,
+                image: "вайнера 107777.jpg"
+            },{
+                id: 113,
+                name: "Window display",
+                description: "Advertising sign",
+                lat: 56.827132,
+                lng: 60.543232,
+                image: "викулова 48.jpg"
+            },
+{
+                id: 114,
+                name: "Cultural institution",
+                description: "Cultural sign",
+                lat: 56.835213,
+                lng: 60.603380,
+                image: "воеводина 5.jpg"
+            },
+{
+                id: 115,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.829965,
+                lng: 60.600789,
+                image: "вывески 8 марта 32а.jpg"
+            },
+{
+                id: 116,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.829962,
+                lng: 60.601047,
+                image: "кафе 8 марта 32а.jpg"
+            },
+{
+                id: 117,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.844950,
+                lng: 60.592021,
+                image: "кафе у ельцин центра.jpg"
+            },
+{
+                id: 118,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.830364,
+                lng: 60.600324,
+                image: "компьютерный клуб радищева 1.jpg"
+            },
+{
+                id: 119,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.830886,
+                lng: 60.600160,
+                image: "кофейня радищева 4.jpg"
+            },
+{
+                id: 120,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.831127,
+                lng: 60.549639,
+                image: "Крауля 70(1).jpg"
+            },
+{
+                id: 121,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.831098,
+                lng: 60.549483,
+                image: "Крауля 70.jpg"
+            },
+{
+                id: 123,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.827983,
+                lng: 60.607922,
+                image: "куйбышева 61 бар.jpg"
+            },
+{
+                id: 124,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.827972,
+                lng: 60.607820,
+                image: "куйбышева 61 фитнес.jpg"
+            },
+{
+                id: 125,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.837149,
+                lng: 60.587379,
+                image: "Ленина 9 9999.jpg"
+            },
+{
+                id: 126,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.836992,
+                lng: 60.587608,
+                image: "Ленина 9.jpg"
+            },
+{
+                id: 127,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.837832,
+                lng: 60.595352,
+                image: "Ленина 25 66666.jpg"
+            },
+{
+                id: 128,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.837796,
+                lng: 60.594908,
+                image: "Ленина 25.jpg"
+            },
+{
+                id: 129,
+                name: "Names of brand",
+                description: "Ergonomic",
+                lat: 56.839356,
+                lng: 60.609980,
+                image: "Ленина 41.jpg"
+            },
+{
+                id: 130,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.839200,
+                lng: 60.614171,
+                image: "Ленина 46  нннн.jpg"
+            },
+{
+                id: 131,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.839275,
+                lng: 60.614820,
+                image: "Ленина 46 ппппппп.jpg"
+            },
+{
+                id: 132,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.839139,
+                lng: 60.615043,
+                image: "Ленина 46.jpg"
+            },
+{
+                id: 133,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.817183,
+                lng: 60.538536,
+                image: "Ленина 46 рррррррррррр.jpg"
+            },
+{
+                id: 134,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.839145,
+                lng: 60.613725,
+                image: "Ленина 46 ффффф.jpg"
+            },
+{
+                id: 135,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.838299,
+                lng: 60.624387,
+                image: "ленина 50 (2).jpg"
+            },
+{
+                id: 136,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.839597,
+                lng: 60.621648,
+                image: "ленина 50 сити центр.jpg"
+            },
+{
+                id: 137,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.841387,
+                lng: 60.634121,
+                image: "ленина 60а .jpg"
+            },
+{
+                id: 138,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.839820,
+                lng: 60.621422,
+                image: "лкенина 50.jpg"
+            },
+{
+                id: 139,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.835599,
+                lng: 60.619860,
+                image: "магащин для спортивной гимнастики мамина-сибиряка 171.jpg"
+            },
+{
+                id: 140,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.833041,
+                lng: 60.592750,
+                image: "малышева 24.jpg"
+            },
+{
+                id: 141,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.835003,
+                lng: 60.609934,
+                image: "малышева 64.jpg"
+            },
+{
+                id: 142,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.836586,
+                lng: 60.618426,
+                image: "мамина сибиряка 98.jpg"
+            },
+{
+                id: 143,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.835996,
+                lng: 60.620165,
+                image: "машина с надписями околл малышева 90.jpg"
+            },
+{
+                id: 144,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.827975,
+                lng: 60.530267,
+                image: "металлургов 48.jpg"
+            },
+{
+                id: 145,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.843530,
+                lng: 60.590739,
+                image: "около ельцин центра.jpg"
+            },
+{
+                id: 146,
+                name: "Poster",
+                description: "Advertising sign",
+                lat: 56.836344,
+                lng: 60.623355,
+                image: "около малышева.jpg"
+            },
+            {
+                id: 147,
+                name: "Opening hours",
+                description: "Information sign",
+                lat: 56.835771,
+                lng: 60.594690,
+                image: "около попова 2.jpg"
+            },
+{
+                id: 148,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.835661,
+                lng: 60.594899,
+                image: "около попова.jpg"
+            },
+{
+                id: 149,
+                name: "Commercial facility",
+                description: "Advertising sign",
+                lat: 56.847755,
+                lng: 60.596422,
+                image: "олимпийская набережная.jpg"
+            },{
+                id: 150,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.827533,
+                lng: 60.601819,
+                image: "отель 8 марта 50.jpg"
+            },
+{
+                id: 151,
+                name: "Poster",
+                description: "Advertising sign",
+                lat: 56.836708,
+                lng: 60.622076,
+                image: "плакат около луначарского 139.jpg"
+            },
+{
+                id: 152,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.835614,
+                lng: 60.594546,
+                image: "попова 2.jpg"
+            },{
+                id: 153,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.834873,
+                lng: 60.591287,
+                image: "попова 9 др 16.jpg"
+            },
+{
+                id: 154,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.834527,
+                lng: 60.588045,
+                image: "попова 13.jpg"
+            },
+{
+                id: 155,
+                name: "Opening hours",
+                description: "Information sign",
+                lat: 56.839046,
+                lng: 60.607286,
+                image: "просп ленина 37.jpg"
+            },{
+                id: 156,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.835090,
+                lng: 60.575186,
+                image: "репина 1 др 2.jpg"
+            },
+{
+                id: 157,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.834845,
+                lng: 60.611542,
+                image: "розы люксембурга 4.jpg"
+            },
+{
+                id: 158,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.835515,
+                lng: 60.589228,
+                image: "сакко и ванцетти 47.jpg"
+            },{
+                id: 159,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.838602,
+                lng: 60.608816,
+                image: "Толмачева 17(1).jpg"
+            },
+{
+                id: 160,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.838609,
+                lng: 60.608862,
+                image: "Толмачева 17.jpg"
+            },
+{
+                id: 161,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.834786,
+                lng: 60.619495,
+                image: "турагенство мамина-сибиряка 102.jpg"
+            },{
+                id: 162,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.848911,
+                lng: 60.591892,
+                image: "фитнес цц олимпийская набережная 9.jpg"
+            },
+{
+                id: 163,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.836664,
+                lng: 60.592144,
+                image: "хохрякова 1а.jpg"
+            },
+{
+                id: 164,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.835564,
+                lng: 60.590872,
+                image: "хохрякова 10 (2).jpg"
+            },{
+                id: 165,
+                name: "Name of brand",
+                description: "Ergonomic",
+                lat: 56.835276,
+                lng: 60.590884,
+                image: "хохрякова 10.jpg"
+            },
+{
+                id: 166,
+                name: "Cultural institution",
+                description: "Cultural sign",
+                lat: 56.833058,
+                lng: 60.596414,
+                image: "эрмитаж вайнера 11.jpg"
+            },
+{
+                id: 167,
+                name: "Bus stop",
+                description: "Transport Facility",
+                lat: 56.819219,
+                lng: 60.539157,
+                image: "!!ост новомосковская.jpg"
+            },{
+                id: 168,
+                name: "Bus schedule",
+                description: "Transport Facility",
+                lat: 56.837355,
+                lng: 60.631770,
+                image: "странсагенство.jpg"
+            },
+{
+                id: 169,
+                name: "Warning",
+                description: "Information sign",
+                lat: 56.839055,
+                lng: 60.610178,
+                image: "трамвай 18.jpg"
+            },
+{
+                id: 170,
+                name: "Description of monument",
+                description: "Memorial sign",
+                lat: 56.833893,
+                lng: 60.602982,
+                image: "кирпичи.jpg"
+            },{
+                id: 171,
+                name: "Cultural institution",
+                description: "Cultural sign",
+                lat: 56.833320,
+                lng: 60.603320,
+                image: "музей андегр.jpg"
+            },
+{
+                id: 172,
+                name: "Cultural institution",
+                description: "Cultural sign",
+                lat: 56.831739,
+                lng: 60.603788,
+                image: "музей эрнеста.jpg"
+            },
+{
+                id: 173,
+                name: "Bus stop",
+                description: "Transport Facility",
+                lat: 56.822568,
+                lng: 60.502713,
+                image: "ост мегаа.jpg"
+            },
+            {
+                id: 174,
+                name: "Subway map",
+                description: "Navigation sign",
+                lat: 56.836070,
+                lng: 60.599878,
+                image: "схема.jpg"
+            },
+        ];
+
+        // Инициализация карты
+        const map = L.map('map').setView([56.8380, 60.6055], 13);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Добавление маркеров на карту
+        const markers = [];
+        
+        attractions.forEach(attraction => {
+            const marker = L.marker([attraction.lat, attraction.lng])
+                .addTo(map)
+                .bindPopup(`
+                    <h3>${attraction.name}</h3>
+                    <img src="${attraction.image}" style="width: 200px; height: 120px; object-fit: cover; border-radius: 5px; margin: 10px 0;">
+                    <p>${attraction.description.substring(0, 100)}...</p>
+                    <button onclick="showAttractionDetail(${attraction.id})" style="background: #1a2a6c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-top: 5px;">Подробнее</button>
+                `);
+            
+            markers.push({
+                id: attraction.id,
+                marker: marker
+            });
+        });
+        
+        // Генерация списка достопримечательностей
+        const attractionsList = document.getElementById('attractions-list');
+        
+        attractions.forEach(attraction => {
+            const attractionItem = document.createElement('div');
+            attractionItem.className = 'attraction-item';
+            attractionItem.setAttribute('data-id', attraction.id);
+            attractionItem.innerHTML = `
+                <img src="${attraction.image}" alt="${attraction.name}" class="attraction-img">
+                <div class="attraction-info">
+                    <h3>${attraction.name}</h3>
+                    <p>${attraction.description.substring(0, 100)}...</p>
+                </div>
+            `;
+            
+            attractionItem.addEventListener('click', () => {
+                showAttractionDetail(attraction.id);
+            });
+            
+            attractionsList.appendChild(attractionItem);
+        });
+        
+        // Функция для показа детальной информации
+        function showAttractionDetail(id) {
+            const attraction = attractions.find(a => a.id === id);
+            const detailSection = document.getElementById('attraction-detail');
+            
+            if (attraction) {
+                detailSection.innerHTML = `
+                    <div class="detail-header">
+                        <img src="${attraction.image}" alt="${attraction.name}" class="detail-img">
+                        <div class="detail-info">
+                            <h2>${attraction.name}</h2>
+                            <p class="detail-description">${attraction.description}</p>
+                        </div>
+                    </div>
+                    <button class="back-button" onclick="hideAttractionDetail()">Вернуться к списку</button>
+                `;
+                
+                detailSection.style.display = 'block';
+                
+                // Плавная прокрутка к деталям
+                detailSection.scrollIntoView({ behavior: 'smooth' });
+                
+                // Центрирование карты на выбранной достопримечательности
+                map.setView([attraction.lat, attraction.lng], 15, {
+                    animate: true,
+                    duration: 1.5
+                });
+                
+                // Открытие попапа маркера
+                const marker = markers.find(m => m.id === id).marker;
+                marker.openPopup();
+            }
+        }
+        
+        function hideAttractionDetail() {
+            const detailSection = document.getElementById('attraction-detail');
+            detailSection.style.display = 'none';
+            
+            // Возврат к общему виду карты
+            map.setView([56.8380, 60.6055], 13, {
+                animate: true,
+                duration: 1.5
+            });
+        }
+    </script>
+</body>
+</html>
